@@ -9,11 +9,13 @@ public class EchoServer {
     private int port;
     BlockingQueue<String> msgQueue = new ArrayBlockingQueue<>(10);
     CopyOnWriteArrayList<ClientHandler> clientHandlerList = new CopyOnWriteArrayList<>();
+    private Quiz quiz;
 
 
 
-    public EchoServer(int port){
+    public EchoServer(int port, Quiz quiz){
         this.port = port;
+        this.quiz = quiz;
     }
 
     public void startServer() throws IOException {
@@ -22,7 +24,7 @@ public class EchoServer {
         ExecutorService es = Executors.newFixedThreadPool(10);
         while(true) {
             Socket client = serverSocket.accept();
-            ClientHandler cl = new ClientHandler(client, msgQueue);
+            ClientHandler cl = new ClientHandler(client, msgQueue,quiz);
             clientHandlerList.add(cl);
             Dispatcher disp = new Dispatcher(clientHandlerList,msgQueue);
             //cl.start();

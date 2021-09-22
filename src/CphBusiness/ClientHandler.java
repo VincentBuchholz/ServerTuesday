@@ -12,12 +12,14 @@ public class ClientHandler implements Runnable{
     private PrintWriter pw;
     private Scanner sc;
     private BlockingQueue<String> msgQueue;
+    private Quiz quiz;
 
-    public ClientHandler(Socket client, BlockingQueue<String> msg) throws IOException {
+    public ClientHandler(Socket client, BlockingQueue<String> msg, Quiz quiz) throws IOException {
         this.client = client;
         this.pw = new PrintWriter(client.getOutputStream(),true);
         this.sc = new Scanner(client.getInputStream());
         this.msgQueue = msg;
+        this.quiz = quiz;
 
     }
 
@@ -36,6 +38,9 @@ public class ClientHandler implements Runnable{
             //TODO: Switch på første del og procces anden del
 
             switch(action){
+                case "QUIZ":
+                    doQuiz();
+                    break;
                 case "ALL":
                     try {
                         msgQueue.put(word);
@@ -89,4 +94,30 @@ public class ClientHandler implements Runnable{
     public PrintWriter getPw() {
         return pw;
     }
+
+    private void doQuiz(){
+        int questionKey;
+        String question;
+        String answer;
+
+        while(!quiz.listEmpty()) {
+            pw.println("Choose an amount: " + quiz.getAvailableQuestions());
+            questionKey = Integer.parseInt(sc.nextLine());
+            while(quiz.questionTaken(questionKey)){
+                pw.println("Question taken, choose new question");
+                questionKey = Integer.parseInt(sc.nextLine());
+            }
+            question = quiz.getQuestion(questionKey);
+            pw.println(question);
+            answer = sc.nextLine();
+
+            if (answer.equals(quiz.getAnswer(questionKey))) {
+                pw.println("Correct");
+            } else {
+                pw.println("incorrect");
+            }
+        }
+        msgQueue.add("Quiz is done");
+    }
+
 }
