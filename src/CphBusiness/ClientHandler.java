@@ -4,18 +4,21 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
-
+import java.util.concurrent.BlockingQueue;
 
 
 public class ClientHandler implements Runnable{
     private Socket client;
     private PrintWriter pw;
     private Scanner sc;
+    private BlockingQueue<String> msgQueue;
 
-    public ClientHandler(Socket client) throws IOException {
+    public ClientHandler(Socket client, BlockingQueue<String> msg) throws IOException {
         this.client = client;
         this.pw = new PrintWriter(client.getOutputStream(),true);
         this.sc = new Scanner(client.getInputStream());
+        this.msgQueue = msg;
+
     }
 
     public void protocol() throws IOException {
@@ -33,6 +36,13 @@ public class ClientHandler implements Runnable{
             //TODO: Switch på første del og procces anden del
 
             switch(action){
+                case "ALL":
+                    try {
+                        msgQueue.put(word);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    break;
                 case "UPPER":
                     pw.println(word.toUpperCase());
                     break;
@@ -47,6 +57,17 @@ public class ClientHandler implements Runnable{
                     }
                     pw.println(outPut);
                     break;
+                case "ALLREVERSE":
+                    charArray = word.toCharArray();
+                    outPut = "";
+                    for (int i = charArray.length-1; i > -1 ; i--) {
+                        outPut = outPut + charArray[i];
+                    }
+                    try {
+                        msgQueue.put(outPut);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 default:
                     pw.println("Incorrect action");
             }
@@ -63,5 +84,9 @@ public class ClientHandler implements Runnable{
                 e.printStackTrace();
             }
         }
+    }
+
+    public PrintWriter getPw() {
+        return pw;
     }
 }
